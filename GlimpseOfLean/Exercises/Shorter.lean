@@ -46,7 +46,7 @@ finish the exercise.
 -/
 
 example (a b : ℝ) : (a+b)*(a-b) = a^2 - b^2 := by {
-  sorry
+  ring
 }
 
 /-
@@ -67,7 +67,8 @@ Try it on the next example.
 -/
 
 example (a b : ℝ) (f : ℝ → ℝ) : f ((a+b)^2 - 2*a*b) = f (a^2 + b^2) := by {
-  sorry
+  congr
+  ring
 }
 
 /-
@@ -138,7 +139,11 @@ This is different from regular selection of text in your editor or browser.
 -/
 
 example (a b c : ℝ) (h : a = -b) (h' : b + c = 0) : b*(a - c) = 0 := by {
-  sorry
+  calc
+    b * (a-c) = b * ((-b) - c) := by congr
+            _ = b * -(b+c)     := by ring
+            _ = b * -(0)       := by congr
+            _ = 0              := by ring
 }
 
 /-
@@ -153,7 +158,9 @@ example (a b : ℝ) (h : a ≤ 2*b) : a + b ≤ 3*b := by {
 }
 
 example (a b : ℝ) (h : b ≤ a) : a + b ≤ 2*a := by {
-  sorry
+  calc
+    a + b ≤ a + a := by gcongr
+          _ = 2*a := by ring
 }
 
 /-
@@ -217,7 +224,7 @@ In the following exercise, you get to choose whether you want help from Lean
 or do all the work.
 -/
 example (f : ℝ → ℝ) (hf : even_fun f) : f (-5) = f 5 := by {
-  sorry
+  apply hf
 }
 
 /-
@@ -314,7 +321,12 @@ need to be the same notation as in the statement.
 -/
 
 example (f g : ℝ → ℝ) (hf : even_fun f) : even_fun (g ∘ f) := by {
-  sorry
+  intro x₀
+  specialize hf x₀
+  calc
+    (g ∘ f) (-x₀) = g (f (-x₀))   := by congr
+                _ = g (f (x₀))    := by congr
+                _ = (g ∘ f) (x₀)  := by congr
 }
 
 /-
@@ -385,7 +397,10 @@ into pieces. You can choose your way in the following variation.
 
 example (f g : ℝ → ℝ) (hf : non_decreasing f) (hg : non_increasing g) :
     non_increasing (g ∘ f) := by {
-  sorry
+  intro x₁ x₂ h
+  apply hg
+  apply hf
+  apply h
 }
 
 /-
@@ -419,7 +434,8 @@ Use `simp` to prove the following. Note that `X : Set ℝ` means that `X` is a
 set containing (only) real numbers. -/
 
 example (x : ℝ) (X Y : Set ℝ) (hx : x ∈ X) : x ∈ (X ∩ Y) ∪ (X \ Y) := by {
-  sorry
+  simp
+  apply hx
 }
 
 /-
@@ -430,7 +446,7 @@ Use `apply?` to find the lemma that every continuous function with compact suppo
 has a global minimum. -/
 
 example (f : ℝ → ℝ) (hf : Continuous f) (h2f : HasCompactSupport f) : ∃ x, ∀ y, f x ≤ f y := by {
-  sorry
+  exact Continuous.exists_forall_le_of_hasCompactSupport hf h2f
 }
 
 /- ## Existential quantifiers
@@ -472,7 +488,12 @@ example (a b c : ℤ) (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c := by {
 }
 
 example (a b c : ℤ) (h₁ : a ∣ b) (h₂ : a ∣ c) : a ∣ b + c := by {
-  sorry
+  rcases h₁ with ⟨k, hk⟩
+  rcases h₂ with ⟨l, hl⟩
+  use k+l
+  calc
+    b + c = (a*k)+(a*l) := by congr
+        _ = a * (k+l)   := by ring
 }
 
 /-
@@ -567,7 +588,24 @@ You will probably want to rewrite using `abs_le` in several assumptions as well 
 goal. You can use `rw [abs_le] at *` for this. -/
 example (hu : seq_limit u l) (hw : seq_limit w l) (h : ∀ n, u n ≤ v n) (h' : ∀ n, v n ≤ w n) :
     seq_limit v l := by {
-  sorry
+  unfold seq_limit at hu
+  unfold seq_limit at hw
+  intro ε ε_pos
+  rcases hu (ε) (by apply?) with ⟨N₁, hN₁⟩
+  rcases hw (ε) (by apply?) with ⟨N₂, hN₂⟩
+  use max N₁ N₂
+  intro n hn
+  rw [ge_max_iff] at hn
+  specialize hN₁ n hn.1
+  specialize hN₂ n hn.2
+  rw [abs_le] at *
+  constructor
+  calc
+    -ε ≤ u n - l    := by apply hN₁.1
+    _  ≤ v n - l    := by gcongr; apply h
+  calc
+    v n - l ≤ w n - l   := by gcongr; apply h'
+    _       ≤ ε         := by apply hN₂.2
 }
 
 
@@ -659,5 +697,3 @@ def CauchySequence (u : ℕ → ℝ) :=
 example : (∃ l, seq_limit u l) → CauchySequence u := by {
   sorry
 }
-
-
