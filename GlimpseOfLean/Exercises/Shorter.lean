@@ -620,9 +620,17 @@ as the first step.
 -- exercises.
 lemma uniq_limit (hl : seq_limit u l) (hl' : seq_limit u l') : l = l' := by {
   apply eq_of_abs_sub_le_all
-  sorry
+  intro ε hε
+  unfold seq_limit at hl
+  unfold seq_limit at hl'
+  rcases hl (ε/2) (by exact half_pos hε) with ⟨N₁, hN₁⟩
+  rcases hl' (ε/2) (by exact half_pos hε) with ⟨N₂, hN₂⟩
+  calc
+    |l - l'| ≤ |l - u (max N₁ N₂)| + |u (max N₁ N₂) - l'| := by exact abs_sub_le l (u (max N₁ N₂)) l'
+           _ = |u (max N₁ N₂) - l| + |u (max N₁ N₂) - l'| := by congr 1; exact abs_sub_comm l (u (max N₁ N₂))
+           _ ≤ ε/2 + ε/2 := by gcongr; apply hN₁; exact Nat.le_max_left N₁ N₂; apply hN₂; exact Nat.le_max_right N₁ N₂
+           _ = ε := by simp
 }
-
 /-
 
 ## Subsequences
@@ -663,7 +671,13 @@ Don’t forget to move the cursor around to see what each `apply?` is proving.
 /-- Extractions take arbitrarily large values for arbitrarily large
 inputs. -/
 lemma extraction_ge : extraction φ → ∀ N N', ∃ n ≥ N', φ n ≥ N := by {
-  sorry
+  intro hyp p q
+  use max p q
+  constructor
+  exact Nat.le_max_right p q
+  calc
+    p ≤ max p q     := by exact Nat.le_max_left p q
+    _ ≤ φ (max p q) := by exact id_le_extraction' hyp (max p q)
 }
 
 /-- A real number `a` is a cluster point of a sequence `u`
@@ -674,7 +688,15 @@ def cluster_point (u : ℕ → ℝ) (a : ℝ) := ∃ φ, extraction φ ∧ seq_l
 `u` arbitrarily close to `a` for arbitrarily large input. -/
 lemma near_cluster :
   cluster_point u a → ∀ ε > 0, ∀ N, ∃ n ≥ N, |u n - a| ≤ ε := by {
-  sorry
+  intro hyp ε hε N
+  rcases hyp with ⟨φ, φ_extr, hφ⟩
+  rcases hφ ε hε with ⟨N', hN'⟩
+  rcases extraction_ge φ_extr N N' with ⟨q, hq, hq'⟩
+  use φ q
+  constructor
+  apply hq'
+  apply hN'
+  apply hq
 }
 
 
