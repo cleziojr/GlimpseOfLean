@@ -703,12 +703,34 @@ lemma near_cluster :
 /-- If `u` tends to `l` then its subsequences tend to `l`. -/
 lemma subseq_tendsto_of_tendsto' (h : seq_limit u l) (hφ : extraction φ) :
   seq_limit (u ∘ φ) l := by {
-  sorry
+  intro ε ε_pos
+  unfold seq_limit at h
+  unfold extraction at hφ
+  rcases h ε ε_pos with ⟨N, hN⟩
+  use N
+  intro n hn
+  apply hN
+  calc
+     N ≤ n    := by apply hn
+    _  ≤ φ n  := by apply id_le_extraction' hφ
+
 }
 
 /-- If `u` tends to `l` all its cluster points are equal to `l`. -/
 lemma cluster_limit (hl : seq_limit u l) (ha : cluster_point u a) : a = l := by {
-  sorry
+  rcases ha with ⟨φ, hφ, hl'⟩
+  apply uniq_limit
+  apply hl'
+  intro ε ε_pos
+  rcases hl ε ε_pos with ⟨N, hN⟩
+  rcases hl' ε ε_pos with ⟨p, hP⟩
+  unfold seq_limit at hl'
+  use N
+  intro q hQ
+  apply hN
+  calc
+     N ≤ q    := by apply hQ
+    _  ≤ φ q  := by apply id_le_extraction' hφ
 }
 
 /-- `u` is a Cauchy sequence if its values get arbitrarily close for large
@@ -717,5 +739,14 @@ def CauchySequence (u : ℕ → ℝ) :=
   ∀ ε > 0, ∃ N, ∀ p q, p ≥ N → q ≥ N → |u p - u q| ≤ ε
 
 example : (∃ l, seq_limit u l) → CauchySequence u := by {
-  sorry
+  intro hyp ε ε_pos
+  rcases hyp with ⟨l, hl⟩
+  rcases hl (ε/2) (by apply?) with ⟨N, hN⟩
+  use N
+  intro p q hP hQ
+  calc
+    |u p - u q| = |u p - l - u q + l| := by ring
+    _ ≤ |u p - l| + |u q - l| := by apply?
+    _ ≤ ε/2 + ε/2 := by gcongr; apply hN; apply hP; apply hN; apply hQ
+    _ ≤ ε := by simp
 }
